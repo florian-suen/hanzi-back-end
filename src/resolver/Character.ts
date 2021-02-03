@@ -18,59 +18,106 @@ import * as TE from 'fp-ts/lib/TaskEither';
 import * as IO from 'fp-ts/lib/IO';
 import * as E from 'fp-ts/lib/Either';
 import { pipe } from 'fp-ts/lib/pipeable';
+import TEconcat from '../utility/te-semigroup';
+
+function createQuery(searchArray:string[],cnIndexArray:boolean[]){
+  let character =''; 
+  let pinyin ='';
+  let searchLength = searchArray.length;
+  for (let i = 0; i < searchLength; i+=1){
+  if (cnIndexArray[i]){
+   character = character.concat(`%${searchArray[i]}`)
+  }
+  else {
+    searchArray[i] ? pinyin = pinyin.concat(`%${searchArray[i]}`) : null;
+  };
+  };
+  
+   return character ? 
+   pinyin ? {char_detail:{character:Like(`${character}%`), pinyin:Like(`${pinyin}%`)}} 
+    : {char_detail:{character:Like(`${character}%`)}} 
+    : pinyin ? {char_detail:{pinyin:Like(`${pinyin}%`)}} : null;
+};
+
+
+
+
  
 
-export class CharacterResolver {
-  private characterCollection: CharCollection[] = [];
-  @Query(returns => [CharCollection])
-    findChar(@Arg("char")char:string[] ):CharCollection[] {
+function searchDB(chars:string[]){
+ 
+  const searchCharacters = chars;
+  const REGEX_CHINESE = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
+  const arrayIsChineseIndex = searchCharacters.map((v)=>REGEX_CHINESE.test(v));
+  const position = (function(){
+    let _primaryPos = 0;
+    let _secondaryPos = 1;
+    const resetSecondary = ():void=>{_secondaryPos = (_primaryPos + 1)};
+    const incrementPrimary = ()=>{
+      if(_secondaryPos - _primaryPos >= 2){
+    return _primaryPos = _secondaryPos - 1;
+      }else{
+   _primaryPos+=1}}
+    const incrementSecondary = ()=>_secondaryPos+=1;
+    const getPosition = (sec:Boolean = false) =>{
+if(sec){
+return _secondaryPos;
+}
+return _primaryPos;
+    }
+    return {
+      resetPos:resetSecondary,
+      incPrimary:incrementPrimary,
+      incSecondary:incrementSecondary,
+      getPos:getPosition
+    }
+  })()
+ 
 
-    const charCollection: CharCollection[] = [];
-    const REGEX_CHINESE = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
-    const HAS_CHINESE_CHAR = REGEX_CHINESE.test;
 
-    function createQuery(searchArray:string[],cnIndexArray:boolean[]){
-      const chinese = {character:''}; 
-      const english = {pinyin:''};
-      for (let i = 0; i <= searchArray.length; i=+1){
-      if (cnIndexArray[i]){
-        chinese.character.concat(`%${searchArray[i]}`)
-      }
-      else {
-        english.pinyin.concat(`%${searchArray[i]}`)
-      };
-      };
+  return (function findCharRecursion (results:CharCollection[] = []){ 
   
-       return chinese.character ? 
-       english.pinyin ? {char_detail:{character:Like(chinese.character), pinyin:Like(english.pinyin)}} 
-        : {char_detail:{character:Like(chinese.character)}} 
-        : {char_detail:{pinyin:Like(english.pinyin)}}
+  const rerunSearch = (x:CharCollection[]):TE.TaskEither<unknown,CharCollection[]> => {
+
+    if(!x.length){
+     position.incPrimary();
+     position.resetPos()
+     return searchCharacters.length > position.getPos() ? findCharRecursion(x) : TE.of(x);
+    }
+    else {
+    position.incSecondary();
+    return searchCharacters.length >= position.getPos(true)? findCharRecursion(x) : TE.of(x);
+
     }
   
-    function searchDB(chars:string[],searchChars:string[] = []){
-      const charactersArray = chars;
-      const searchCharacters = searchChars;
-      const addCharToSearch = IO.of(()=>searchCharacters.push(charactersArray.shift()!));
-      charactersArray[0] && addCharToSearch()();    
-
-      const arrayIsChineseIndex = searchCharacters.map(HAS_CHINESE_CHAR);
-      const results:CharCollection[] = [];
-      const QUERY = createQuery(searchCharacters,arrayIsChineseIndex);
-      
-
-      const queryDB = TE.tryCatchK((query:any)=>Characters.find(query),(reason)=>`findChar Resolver error:${(reason as Error).stack}`)
-      const addCharArray = (value:E.Either<never, Characters[]>) => pipe(value,E.map((v)=>results.push(...v)))
-    
-      pipe(QUERY,queryDB,TE.orElse<string,Characters[],never>((error)=>TE.of([])))().then(addCharArray);
-
-     
-      //return charactersArray ? searchDB() : results;
-
-  };
-
+  }
+  const searchArray = searchCharacters.slice(position.getPos(),position.getPos(true));
+  const chineseIndex = arrayIsChineseIndex.slice(position.getPos(),position.getPos(true));
+  const query = createQuery(searchArray,chineseIndex);
+  const searchQuery = (query:object|null)=>query ? Characters.find(query) : Promise.reject('Search query empty');
+  const queryDB = TE.tryCatchK(searchQuery,(reason)=>'findChar Resolver search error');
 
   
+  return pipe(query,queryDB,TE.orElse<string,CharCollection[],never>((error)=>TE.of([])),TE.chain(rerunSearch),TEconcat(TE.of(results)));
+  
+
+  })()
+
+
+
+
+
+};
+
+export class CharacterResolver {
+  @Query(returns => [CharCollection])
+    async findChar(@Arg('char', type => [String])char:string[] ):Promise<CharCollection[]> {
+ 
+    const charCollection: CharCollection[] = []; 
+    const searchResults = await searchDB(char)();
+    pipe(searchResults,E.map((v)=>charCollection.push(...v)));
     return charCollection;
  
   }
 }
+

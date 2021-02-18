@@ -10,7 +10,7 @@ interface TEconcat {
 
     const arraySemigroup:Semigroup<Array<CharCollection>> = {concat: (x, y) => x.concat(y)};
     const semiGroupCharColl = getSemigroup(arraySemigroup);
-    const duplicateCheck = (chars:CharCollection[])=> chars.filter((val,index,arr)=>arr.findIndex(v=>(v.id === val.id && v.char_detail.character === val.char_detail.character ))=== index);
+    const duplicateCheck = (chars:CharCollection[])=> chars.filter((val,index,arr)=>arr.findIndex(v=>(v.char_detail.character === val.char_detail.character )) === index);
     const concatTEChar:TEconcat = (x)=>(y)=>pipe(semiGroupCharColl.concat(x,y),TE.map(duplicateCheck));
     
     export default concatTEChar;

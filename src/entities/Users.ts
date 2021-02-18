@@ -9,24 +9,32 @@ import {
     OneToMany,
   } from "typeorm";
  
+
 @Entity()
+@ObjectType()
 export class Users extends BaseEntity {
     @Field()
     @PrimaryGeneratedColumn()
     id!:number;
   
     @Field()
-    @PrimaryGeneratedColumn()
+    @Column({ unique: true })
     username!:string;
   
     @Field()
-    @PrimaryGeneratedColumn()
+    @Column({ unique: true })
     email!:string;
   
-    @Field()
-    @PrimaryGeneratedColumn()
-    password!:number;
-  
 
+    @Column()
+    password!:string;
+  
+    @Field()
+    @CreateDateColumn()
+    createdAt!: Date;
+
+    @Field()
+    @UpdateDateColumn()
+    updatedAt!: Date;
 }
 

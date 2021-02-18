@@ -20,15 +20,15 @@ export class Common {
 }
 
 @InterfaceType({resolveType: value => {
-  if ("variant" in value) {
+  if ('variant' in value) {
     return Characters;
   }
 
-  if ("chengyu" in value) {
+  if ('chengyu' in value) {
     return Sentences; 
   }
 
-  return Words;
+  value ? Words : undefined;
 }})
 
 export abstract class CharCollection {

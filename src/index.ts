@@ -38,7 +38,8 @@ const logDBConnection = flow(logDBSuccess,logDBError)
 pipe(dbConnect(),logDBConnection)();  
 const app = IO.of(express);
 let RedisStore = connectRedis(session);
-let redisClient = new Redis({host: 'redis'});
+//{host: 'redis'}
+let redisClient = new Redis();
 const appUseRedis = (app:express.Application )=>IO.of(app.use(session({
   name:'ceid',
   store: new RedisStore({ client: redisClient,disableTouch:true }),
@@ -69,7 +70,7 @@ const connectApollo = async (app:express.Application) => {
       apolloServer.applyMiddleware({app,cors:false});
     }
 
-pipe(app()(),IO.of,IO.chainFirst(appGet),IO.chainFirst(appUseRedis),TE.fromIO,TE.chainFirst(flow(connectApollo,TE.of)),TE.map(appListen))();
+pipe(app()(),IO.of,IO.chainFirst(appUseRedis),IO.chainFirst(appGet),TE.fromIO,TE.chainFirst(flow(connectApollo,TE.of)),TE.map(appListen))();
 
 
  

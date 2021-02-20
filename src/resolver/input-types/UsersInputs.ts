@@ -1,4 +1,4 @@
-import {InputType, Field} from 'type-graphql';
+import {InputType, Field, createUnionType} from 'type-graphql';
 import {MaxLength,Length,IsEmail,IsNotEmpty,ValidationArguments} from 'class-validator';
 import {Users} from '../../entities/Users'
 
@@ -6,7 +6,7 @@ const passLength = (args:ValidationArguments) => args.value.length < 8 ? 'Passwo
 'Password is too long. A maximum of 20 is allowed';
 
 @InputType()
-export class regInputs implements Partial<Users>{
+export class RegInputs implements Partial<Users>{
 @Field()
 @MaxLength(15,{message:'Only a maximum of 15 characters is allowed for your username'})
 @IsNotEmpty({message:'Username is required'})
@@ -21,3 +21,14 @@ password!: string;
 @IsNotEmpty({message:'Email is required'})
 email!: string;
 }
+
+
+@InputType()
+export abstract class LoginInputs implements Partial<Users>{
+@Field()
+@IsNotEmpty({message:'Username is required'})
+username!: string;
+@Field()
+@IsNotEmpty({message:'Password is required'})
+password!: string;
+} 

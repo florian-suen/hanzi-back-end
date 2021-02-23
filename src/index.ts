@@ -5,8 +5,8 @@ import { buildSchema } from "type-graphql";
 import {createConnection, Connection, getRepository, getConnection, Like} from "typeorm";
 import 'dotenv/config';
 import {Characters} from './entities/Characters';
-import {CharacterResolver} from './resolver/Characters'
-import {UserResolver} from './resolver/Users'
+import {CharacterResolver} from './resolver/CharactersResolver'
+import {UserResolver} from './resolver/UsersResolver'
 import {Sentences} from './entities/Sentences';
 import {Users} from './entities/Users';
 import {Words} from './entities/Words';
@@ -35,20 +35,23 @@ const dbConnect = (url = process.env.DB_HOST||process.env.DBURL):TE.TaskEither<s
 const logDBSuccess = TE.chainFirst<string,Connection,void>(()=>TE.of(C.log('Database Connection Success')()));
 const logDBError = TE.mapLeft<string,O.Option<string>>((error)=>pipe(O.of(error),O.chainFirst((error)=>O.of(C.log(error)()))));
 const logDBConnection = flow(logDBSuccess,logDBError)
+
 pipe(dbConnect(),logDBConnection)();  
+
+
 const app = IO.of(express);
 let RedisStore = connectRedis(session);
 //{host: 'redis'}
-let redisClient = new Redis();
+let redis = new Redis();
 const appUseRedis = (app:express.Application )=>IO.of(app.use(session({
   name:'ceid',
-  store: new RedisStore({ client: redisClient,disableTouch:true }),
+  store: new RedisStore({ client: redis,disableTouch:true }),
   cookie:{maxAge:1000*60*60*24*365,
   httpOnly:true,
   sameSite:'lax',
   secure: false,
 },
-  secret:'procesghggkgkgkjg',
+  secret:process.env.SESSION_SECRET!,
   resave: false,
   saveUninitialized:false
 })));
@@ -65,12 +68,13 @@ const connectApollo = async (app:express.Application) => {
     
       const apolloServer = new ApolloServer({introspection: true, playground:true,
           schema: schema,
-          context:({req,res})=>({req,res, redisClient})
+          context:({req,res})=>({req,res,redis})
       });
       apolloServer.applyMiddleware({app,cors:false});
     }
 
 pipe(app()(),IO.of,IO.chainFirst(appUseRedis),IO.chainFirst(appGet),TE.fromIO,TE.chainFirst(flow(connectApollo,TE.of)),TE.map(appListen))();
+
 
 
  

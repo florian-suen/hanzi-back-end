@@ -1,4 +1,4 @@
-import {InputType, Field, createUnionType} from 'type-graphql';
+import {InputType, Field} from 'type-graphql';
 import {MaxLength,Length,IsEmail,IsNotEmpty,ValidationArguments} from 'class-validator';
 import {Users} from '../../entities/Users'
 
@@ -24,11 +24,27 @@ email!: string;
 
 
 @InputType()
-export abstract class LoginInputs implements Partial<Users>{
+export abstract class LoginInputs implements Partial<RegInputs>{
 @Field()
 @IsNotEmpty({message:'Username is required'})
 username!: string;
 @Field()
+@IsNotEmpty({message:'Password is required'})
+password!: string;
+} 
+
+@InputType()
+export class EmailInput implements Partial<RegInputs>{
+@Field()
+@IsEmail({},{message:'Email is not valid'})
+@IsNotEmpty({message:'Email is required'})
+email!: string;
+}
+
+@InputType()
+export abstract class PasswordInput implements Partial<RegInputs>{
+@Field()
+@Length(8, 20,({message:passLength}))
 @IsNotEmpty({message:'Password is required'})
 password!: string;
 } 

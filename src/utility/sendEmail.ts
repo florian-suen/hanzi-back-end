@@ -1,5 +1,4 @@
 import nodemailer from 'nodemailer';
-import {EmailInput} from '../resolver/input-types/UsersInputs'
 // async..await is not allowed in global scope, must use a wrapper
 export async function sendEmail(email:string,html:string) {
   // Generate test SMTP service account from ethereal.email

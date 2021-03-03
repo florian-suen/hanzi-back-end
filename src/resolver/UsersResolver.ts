@@ -11,10 +11,8 @@ import {RegInputs,LoginInputs,EmailInput,PasswordInput} from './input-types/User
 import {DatabaseError,ValidationErrors} from './object-types/UsersObject';
 import {sendEmail} from '../utility/sendEmail';
 import {v4} from 'uuid';
+import {NodeError} from '../types/node-error';
 
-interface NodeError extends NodeJS.ErrnoException { 
-detail:string;
-}
 
 const regResponse = createUnionType({name:'regResponse',types:()=>[Users,DatabaseError,ValidationErrors] as const, resolveType:(val)=>{
 if('responses' in val)
@@ -25,8 +23,6 @@ if('username' in val)
 { return Users }
 return undefined;
 }})
-
-
 
 @Resolver(Users)
 export class UserResolver {
@@ -88,9 +84,9 @@ export class UserResolver {
   }
   
   @Mutation(returns => Boolean)
-  logout(@Ctx(){req, res}:Context):Promise<boolean> {
+   logout(@Ctx(){req, res}:Context):Promise<boolean> {
 
-   return new Promise((resolve)=>{
+   const results:T.Task<boolean> = () => new Promise((resolve)=>{
       req.session.destroy(error =>
       {
         if (error) {
@@ -101,6 +97,9 @@ export class UserResolver {
         resolve(true);
       })
     })
+
+    return results() 
+
   }
 
   @Mutation(returns => regResponse)

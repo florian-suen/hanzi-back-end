@@ -16,7 +16,6 @@ username!: string;
 @IsNotEmpty({message:'Password is required'})
 password!: string;
 @Field()
-@Length(8, 20,({message:passLength}))
 @IsEmail({},{message:'Email is not valid'})
 @IsNotEmpty({message:'Email is required'})
 email!: string;

@@ -1,8 +1,8 @@
 import "reflect-metadata";
 import express from 'express';
-import { ApolloServer, ApolloServerExpressConfig } from "apollo-server-express";
+import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
-import {createConnection, Connection, getRepository, getConnection, Like} from "typeorm";
+import {createConnection, Connection} from "typeorm";
 import 'dotenv/config';
 import {Characters} from './entities/Characters';
 import {CharacterResolver} from './resolver/CharactersResolver'
@@ -18,6 +18,7 @@ import * as O from 'fp-ts/lib/Option';
 import Redis from 'ioredis';
 import connectRedis from 'connect-redis';
 import session from 'express-session';
+import cors from 'cors';
   
 const dbConnect = (url = process.env.DB_HOST||process.env.DBURL):TE.TaskEither<string, Connection> => {
   console.log(url)
@@ -40,9 +41,13 @@ pipe(dbConnect(),logDBConnection)();
 
 
 const app = IO.of(express);
+
+const appCors = (app:express.Application )=>IO.of(app.use(cors()));
+
 let RedisStore = connectRedis(session);
 //{host: 'redis'}
 let redis = new Redis();
+
 const appUseRedis = (app:express.Application )=>IO.of(app.use(session({
   name:'ceid',
   store: new RedisStore({ client: redis,disableTouch:true }),
@@ -73,7 +78,7 @@ const connectApollo = async (app:express.Application) => {
       apolloServer.applyMiddleware({app,cors:false});
     }
 
-pipe(app()(),IO.of,IO.chainFirst(appUseRedis),IO.chainFirst(appGet),TE.fromIO,TE.chainFirst(flow(connectApollo,TE.of)),TE.map(appListen))();
+pipe(app()(),IO.of,IO.chainFirst(appCors),IO.chainFirst(appUseRedis),IO.chainFirst(appGet),TE.fromIO,TE.chainFirst(flow(connectApollo,TE.of)),TE.map(appListen))();
 
 
 

@@ -117,7 +117,7 @@ export class UserResolver {
       return val;
    }
    const findError = (error:string)=> T.of({type:'Finduser database Error', message:error});
-   const handleFind = (val:T.Task<Users|null>) => pipe(val,T.map((v:Users|null)=> v ? v : {type:'No Match', message:'There are no users that matches with the details you have entered'} )); 
+   const handleFind = (val:T.Task<Users|null>) => pipe(val,T.map((v:Users|null)=> v ? v : {type:'No Match', message:'There are no users that matches the details you have entered'} )); 
  
    return await pipe(findUser,TE.map(checkPassword),TE.map(setSession),TE.fold<string,T.Task<null|Users>,DatabaseError|Users>(findError,handleFind))()
  }
@@ -135,7 +135,7 @@ export class UserResolver {
     const dbError = error as NodeError; 
     const COLUMNREGEX = /(?<=\()\w+/;
     const columnError = dbError.detail.match(COLUMNREGEX) 
-    return dbError.code === '23505' ? {type:'duplicate', message:`${columnError![0]} already exists. Please choose another ${columnError![0]}`} : 
+    return dbError.code === '23505' ? {type:'duplicate', message:`This ${columnError![0]} already exists. Please choose another ${columnError![0]}`} : 
     {type:'default', message:'Registration Error'};
   } 
   const insertUser = await TE.tryCatch(insertNewUser,handleError)()

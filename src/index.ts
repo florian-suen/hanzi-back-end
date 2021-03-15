@@ -22,7 +22,7 @@ import cors from 'cors';
   
 const dbConnect = (url = process.env.DB_HOST||process.env.DBURL):TE.TaskEither<string, Connection> => {
   console.log(url)
-  const Connection = TE.tryCatch(()=> createConnection({
+  const connect = TE.tryCatch(()=> createConnection({
     type: 'postgres',
     url:url,
     synchronize:true,
@@ -30,7 +30,7 @@ const dbConnect = (url = process.env.DB_HOST||process.env.DBURL):TE.TaskEither<s
     entities:[Characters,Sentences,Users,Words]
   }),(error)=> typeof error === 'object' ? `Connection error: ${((error as Error).stack)}` :'Critical error: Connection never established')
    
-  return Connection;
+  return connect;
   }
   
 const logDBSuccess = TE.chainFirst<string,Connection,void>(()=>TE.of(C.log('Database Connection Success')()));
@@ -42,7 +42,10 @@ pipe(dbConnect(),logDBConnection)();
 
 const app = IO.of(express);
 
-const appCors = (app:express.Application )=>IO.of(app.use(cors()));
+const appCors = (app:express.Application )=>IO.of(app.use(cors({
+  origin:'http://localhost:3000',
+  credentials: true,
+})));
 
 let RedisStore = connectRedis(session);
 //{host: 'redis'}

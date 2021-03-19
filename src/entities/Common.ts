@@ -6,35 +6,35 @@ import {Words} from './Words';
 
 @ObjectType()
 export class Common {
-   
-    @Field()
-    @Column()
-    character!: string;
-    @Field()
-    @Column()
-    pinyin!: string;
-    @Field()
-    @Column()
-    meaning!: string;
-
+@Field()
+@Column()
+character!: string;
+@Field()
+@Column()
+pinyin!: string;
+@Field()
+@Column()
+meaning!: string;
 }
 
 @InterfaceType({resolveType: value => {
-  if ('variant' in value) {
-    return Characters;
-  }
-
   if ('chengyu' in value) {
-    return Sentences; 
+    return 'Sentences'; 
   }
 
-  value ? Words : undefined;
-}})
+  if ('variant' in value) {
+    return 'Characters';
+  }
 
+  if ('flashcardwords' in value) {
+    return 'Words'; 
+  }
+
+return null;
+}})
 export abstract class CharCollection {
   @Field()
-  id!: number;
-
+  id!:number;
   @Field(type => Common)
-  char_detail!: Common;
+  char_detail!:Common;
 }

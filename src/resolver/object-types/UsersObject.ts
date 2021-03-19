@@ -8,7 +8,7 @@ import {Field,ObjectType,InterfaceType} from 'type-graphql';
     if('type' in val){
       return DatabaseError;
     }
-    return undefined;
+    return null;
   }}) 
   
   abstract class ErrorResponse {

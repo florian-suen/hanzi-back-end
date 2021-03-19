@@ -4,11 +4,12 @@ import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import {createConnection, Connection} from "typeorm";
 import 'dotenv/config';
+import {Users} from './entities/Users';
 import {Characters} from './entities/Characters';
+import {Flashcards} from "./entities/Flashcards";
 import {CharacterResolver} from './resolver/CharactersResolver'
 import {UserResolver} from './resolver/UsersResolver'
 import {Sentences} from './entities/Sentences';
-import {Users} from './entities/Users';
 import {Words} from './entities/Words';
 import * as TE from 'fp-ts/lib/TaskEither';
 import { pipe,flow } from 'fp-ts/lib/function';
@@ -19,15 +20,18 @@ import Redis from 'ioredis';
 import connectRedis from 'connect-redis';
 import session from 'express-session';
 import cors from 'cors';
-  
+import { FlashcardWords } from "./entities/FlashCardWords";
+import { FlashcardSentences } from "./entities/FlashCardSentences";
+
+  //synch
 const dbConnect = (url = process.env.DB_HOST||process.env.DBURL):TE.TaskEither<string, Connection> => {
   console.log(url)
   const connect = TE.tryCatch(()=> createConnection({
     type: 'postgres',
     url:url,
-    synchronize:true,
+   synchronize:true,
     logging:true,
-    entities:[Characters,Sentences,Users,Words]
+    entities:[FlashcardWords,FlashcardSentences, Flashcards,Words,Characters,Sentences,Users]
   }),(error)=> typeof error === 'object' ? `Connection error: ${((error as Error).stack)}` :'Critical error: Connection never established')
    
   return connect;
@@ -72,7 +76,7 @@ C.log("server on localhost:4000")();
 const connectApollo = async (app:express.Application) => {
       const schema = await buildSchema({
       resolvers: [UserResolver,CharacterResolver],
-      validate: false,});
+      validate: false});
     
       const apolloServer = new ApolloServer({introspection: true, playground:true,
           schema: schema,

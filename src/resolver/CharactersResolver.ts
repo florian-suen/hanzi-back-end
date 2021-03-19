@@ -1,16 +1,30 @@
-import {Arg, Query, Resolver} from 'type-graphql';
-import {Like} from "typeorm";
+import {Arg, Query, Resolver,createUnionType} from 'type-graphql';
 import {Characters} from '../entities/Characters'
 import {Sentences} from '../entities/Sentences'
 import {Words} from '../entities/Words'
-import {CharCollection} from '../entities/Common'
 import * as TE from 'fp-ts/lib/TaskEither';
 import * as E from 'fp-ts/lib/Either';
 import { pipe } from 'fp-ts/lib/pipeable';
 import TEconcat from '../utility/te-semigroup';
 import {Options} from './input-types/CharsInputs'
 import {getRepository} from "typeorm";
-import { Users } from '../entities/Users';
+
+export const charResponse = createUnionType({name:'charResponse',types:()=>[Characters,Words,Sentences] as const, resolveType:(value)=>{
+  if ('variant' in value) {
+    return 'Characters';
+  }
+
+  if ('chengyu' in value) {
+    return 'Sentences'; 
+  }
+
+  if ('word' in value) {
+    return 'Words'; 
+  }
+
+return null;
+  }})
+  
 
 const queryDB = (query:string[],options:string[],cnIndex:boolean[])=> 
   {
@@ -27,12 +41,12 @@ const queryDB = (query:string[],options:string[],cnIndex:boolean[])=>
     }) : searchPY[0];
 
     for(let i = 0; optLength > i; i+=1){
-      if(searchCN.length > 0 && searchPY.length > 0 ) taskArray.push(TE.tryCatch<string, CharCollection[]>(()=>  getRepository(optionList[options[i]]).createQueryBuilder().where(`unaccent("charDetailCharacter") Like unaccent(:char)`,{char:`${combineCN}%`})
+      if(searchCN.length > 0 && searchPY.length > 0 ) taskArray.push(TE.tryCatch<string, typeof charResponse[]>(()=>  getRepository(optionList[options[i]]).createQueryBuilder().where(`unaccent("charDetailCharacter") Like unaccent(:char)`,{char:`${combineCN}%`})
       .orWhere(`unaccent("charDetailPinyin") Like unaccent(:char)`,{char:`${combinePY}%`}).getMany(),(reason)=>'findChar Resolver search error')); 
   
-      else if(searchCN.length > 0) taskArray.push(TE.tryCatch<string, CharCollection[]>(()=> getRepository(optionList[options[i]]).createQueryBuilder().where(`unaccent("charDetailCharacter") Like unaccent(:char)`,{char:`${combineCN}%`}).getMany(),(reason)=>'findChar Resolver search error')); 
+      else if(searchCN.length > 0) taskArray.push(TE.tryCatch<string, typeof charResponse[]>(()=> getRepository(optionList[options[i]]).createQueryBuilder().where(`unaccent("charDetailCharacter") Like unaccent(:char)`,{char:`${combineCN}%`}).getMany(),(reason)=>'findChar Resolver search error')); 
 
-      else if(searchPY.length > 0) taskArray.push(TE.tryCatch<string, CharCollection[]>(()=> getRepository(optionList[options[i]]).createQueryBuilder().where(`unaccent("charDetailPinyin") Like unaccent(:char)`,{char:`${combinePY}%`}).getMany(),(reason)=>'findChar Resolver search error')); 
+      else if(searchPY.length > 0) taskArray.push(TE.tryCatch<string, typeof charResponse[]>(()=> getRepository(optionList[options[i]]).createQueryBuilder().where(`unaccent("charDetailPinyin") Like unaccent(:char)`,{char:`${combinePY}%`}).getMany(),(reason)=>'findChar Resolver search error')); 
 
     }
 
@@ -80,9 +94,9 @@ function searchDB(chars:string[],options:Options){
     }
   })()
  
-  return (function findCharRecursion (results:CharCollection[] = []){ 
+  return (function findCharRecursion (results: typeof charResponse[] = []){ 
   
-  const rerunSearch = (x:CharCollection[]):TE.TaskEither<string,CharCollection[]> => {
+  const rerunSearch = (x: typeof charResponse[]):TE.TaskEither<string, typeof charResponse[]> => {
     if(!x.length){
      position.incPrimary();
      position.resetPos()
@@ -94,26 +108,26 @@ function searchDB(chars:string[],options:Options){
     }
   }
   const searchArray = searchCharacters.slice(position.getPos(),position.getPos(true));
-  const chineseIndex = arrayIsChineseIndex.slice(position.getPos(),position.getPos(true));
+  const cnIndex = arrayIsChineseIndex.slice(position.getPos(),position.getPos(true));
  
-  return pipe(queryDB(searchArray,optionsArray,chineseIndex),TE.orElse<string,CharCollection[],never>((error)=>TE.of([])),TE.chain<string,CharCollection[],CharCollection[]>(rerunSearch),TEconcat(TE.of(results)));
+  return pipe(queryDB(searchArray,optionsArray,cnIndex),TE.orElse<string, typeof charResponse[],never>((error)=>TE.of([])),TE.chain<string,typeof charResponse[], typeof charResponse[]>(rerunSearch),TEconcat(TE.of(results)));
   })()
 };
-
-
-@Resolver(of => CharCollection)
+@Resolver()
 export class CharacterResolver {
-  @Query(returns => [CharCollection])
-    async findChar(@Arg('char', type => [String])char:string[],@Arg('options', type => Options )options:Options):Promise<CharCollection[]> {
-    const trimCharArray = char.filter(v=>v!='');
+  @Query(returns => [charResponse])
+    async findChar(@Arg('char', type => [String])char:string[],@Arg('options', type => Options )options:Options):Promise< typeof charResponse[]> {
+  
+    const trimCharArray = char.filter(v=>v!='').map(v=>v.toLowerCase());
     if(trimCharArray.length === 0) return [];
-
-    const charCollection: CharCollection[] = []; 
+ 
+    const charResults: typeof charResponse[] = []; 
     const searchResults = await searchDB(trimCharArray,options)();
-    pipe(searchResults,E.map((v)=>charCollection.push(...v)));
-    return charCollection;
+    pipe(searchResults,E.map((v)=>charResults.push(...v)));
+
+    
+    return charResults;
 
   }
 }
 
-//SELECT * FROM characters WHERE unaccent("charDetailPinyin") Like unaccent('%Zhōngguó%')

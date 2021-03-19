@@ -1,4 +1,4 @@
-import {Arg, Query, Resolver, Ctx, Mutation, createUnionType} from 'type-graphql';
+import {Arg, Query, Resolver, Ctx, Mutation, createUnionType,FieldResolver,Root} from 'type-graphql';
 import {validator} from '../utility/validator';
 import Context from '../types/context';
 import {Users} from '../entities/Users'
@@ -12,7 +12,21 @@ import {DatabaseError,ValidationErrors} from './object-types/UsersObject';
 import {sendEmail} from '../utility/sendEmail';
 import {v4} from 'uuid';
 import {NodeError} from '../types/node-error';
+import { Flashcards } from '../entities/Flashcards';
+import { Characters } from '../entities/Characters';
+import { FlashcardWords } from '../entities/FlashCardWords';
+import { FlashcardSentences } from '../entities/FlashCardSentences';
 
+
+const flashResponse = createUnionType({name:'flashResponse',types:()=>[Flashcards,FlashcardWords,FlashcardSentences] as const, resolveType:(val)=>{
+  if('characters' in val)
+  { return Flashcards }
+  if('words' in val)
+  { return FlashcardWords }
+  if('sentences' in val)
+  { return FlashcardSentences }
+  return undefined;
+  }})
 
 const regResponse = createUnionType({name:'regResponse',types:()=>[Users,DatabaseError,ValidationErrors] as const, resolveType:(val)=>{
 if('responses' in val)
@@ -24,8 +38,17 @@ if('username' in val)
 return undefined;
 }})
 
-@Resolver(Users)
+@Resolver(of=>Users)
 export class UserResolver {
+@FieldResolver(()=>[flashResponse])
+async flashcards(@Root() users:Users){
+ const charResponse = await Flashcards.createQueryBuilder('flashcard').leftJoinAndSelect("flashcard.characters", "characters").where("flashcard.usersId = :id",{id:users.id}).getMany();
+ const wordResponse = await FlashcardWords.createQueryBuilder('flashcard').leftJoinAndSelect("flashcard.words", "words").where("flashcard.usersId = :id",{id:users.id}).getMany();
+ const sentenceResponse = await FlashcardSentences.createQueryBuilder('flashcard').leftJoinAndSelect("flashcard.sentences", "sentence").where("flashcard.usersId = :id",{id:users.id}).getMany();
+ 
+ return [...charResponse,...wordResponse,...sentenceResponse];
+
+}
 
   @Mutation(returns => Boolean)
   async forgotPass(@Arg('emailInput')emailInput:EmailInput,@Ctx(){redis}:Context) {
@@ -80,7 +103,11 @@ export class UserResolver {
 
   @Query(returns => Users,{nullable:true})
   async isLogged(@Ctx(){req}:Context) {
+
+    console.log(await Users.createQueryBuilder().relation(Users,'flashcards').of(Users.findOne(req.session.userId)).loadMany());
+
     return req.session.userId ? Users.findOne(req.session.userId) : null;
+   
   }
   
   @Mutation(returns => Boolean)

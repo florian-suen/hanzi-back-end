@@ -1,5 +1,6 @@
 import { ObjectType, Field } from "type-graphql";
 import {Common, CharCollection} from './Common';
+import { Flashcards } from "./Flashcards";
 import {Sentences} from './Sentences';
 import {Words} from './Words';
 import {
@@ -7,35 +8,34 @@ import {
   Column,
   PrimaryGeneratedColumn,
   BaseEntity,
-  OneToMany,
   ManyToMany,
   JoinTable,
+  ManyToOne,
+  OneToMany,
 } from "typeorm";
 
 @ObjectType({implements:CharCollection})
 @Entity()
 export class Characters extends BaseEntity implements CharCollection {
-  @PrimaryGeneratedColumn()
-  id!: number;
+@PrimaryGeneratedColumn()
+id!:number;
 
-  @Column(type => Common)
-  char_detail!:Common
+@Column(type => Common)
+char_detail!:Common;
 
-  @Column()
-  variant!: string;
+@Field({nullable:true})
+@Column({nullable:true})
+variant?: string;
 
- @ManyToMany(()=>Sentences, sentences=>sentences.characters,{cascade:true})
- @JoinTable({name:'character_sentence'})
- sentences!:Sentences[];
+@ManyToMany(()=>Sentences, sentences=>sentences.characters,{cascade:true})
+@JoinTable({name:'character_sentence'})
+sentences!:Sentences[];
 
 @ManyToMany(()=>Words, words=>words.characters,{cascade:true})
 @JoinTable({name:'character_word'})
- words!:Words[];
+words!:Words[];
 
-
-
-
-
-
-
+@JoinTable()
+@OneToMany(()=>Flashcards, flashcards=>flashcards.characters)
+flashcards!: Flashcards[];
 }

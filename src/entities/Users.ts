@@ -7,7 +7,13 @@ import {
     Column,
     BaseEntity,
     OneToMany,
+    ManyToMany,
+    JoinTable,
+    ManyToOne,
   } from "typeorm";
+import { Flashcards } from "./Flashcards";
+import { FlashcardSentences } from "./FlashCardSentences";
+import { FlashcardWords } from "./FlashCardWords";
  
 
 @Entity()
@@ -36,5 +42,18 @@ export class Users extends BaseEntity {
     @Field()
     @UpdateDateColumn()
     updatedAt!: Date;
+
+    @Field(()=>[Flashcards])
+    @OneToMany(()=> Flashcards, flashcards=>flashcards.users)
+    flashcards!:Flashcards[];
+
+    @Field(()=>[FlashcardWords])
+    @OneToMany(()=> FlashcardWords, flashcardwords=>flashcardwords.users)
+    flashcardwords!:FlashcardWords[];
+
+    @Field(()=>[FlashcardSentences])
+    @OneToMany(()=> FlashcardSentences, flashcardsentences=>flashcardsentences.users)
+    flashcardsentences!:FlashcardSentences[];
+
 }
 

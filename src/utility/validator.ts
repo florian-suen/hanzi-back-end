@@ -1,5 +1,5 @@
 import {validate,ValidationError} from 'class-validator';
-import { pipe, identity } from 'fp-ts/lib/function';
+import { pipe } from 'fp-ts/lib/function';
 import * as T from 'fp-ts/lib/Task';
 import {ValidationErrors} from '../resolver/object-types/UsersObject'
 

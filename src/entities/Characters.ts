@@ -10,7 +10,6 @@ import {
   BaseEntity,
   ManyToMany,
   JoinTable,
-  ManyToOne,
   OneToMany,
 } from "typeorm";
 

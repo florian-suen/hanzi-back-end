@@ -1,18 +1,12 @@
 import { ObjectType, Field } from "type-graphql";
-import {Common, CharCollection} from './Common';
 import {Sentences} from './Sentences';
-import {Words} from './Words';
 import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
   BaseEntity,
-  ManyToMany,
   ManyToOne,
-  JoinTable,
-  Index
 } from "typeorm";
-import { Characters } from "./Characters";
 import { Users } from "./Users";
 
 @Entity()

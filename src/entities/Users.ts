@@ -7,9 +7,6 @@ import {
     Column,
     BaseEntity,
     OneToMany,
-    ManyToMany,
-    JoinTable,
-    ManyToOne,
   } from "typeorm";
 import { Flashcards } from "./Flashcards";
 import { FlashcardSentences } from "./FlashCardSentences";

@@ -1,4 +1,4 @@
-import { ObjectType, Field } from "type-graphql";
+import { ObjectType } from "type-graphql";
 import {Common, CharCollection} from './Common';
 import {
     Entity,

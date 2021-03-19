@@ -8,10 +8,8 @@ import {
   PrimaryGeneratedColumn,
   BaseEntity,
   ManyToMany,
-  JoinTable,
   OneToMany,
 } from "typeorm";
-import { Flashcards } from "./Flashcards";
 import { FlashcardSentences } from "./FlashCardSentences";
 
 @ObjectType({implements:CharCollection})

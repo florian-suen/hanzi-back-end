@@ -1,8 +1,5 @@
 import {Column} from "typeorm";
 import { ObjectType, Field, InterfaceType } from "type-graphql";
-import {Characters} from './Characters';
-import {Sentences} from './Sentences';
-import {Words} from './Words';
 
 @ObjectType()
 export class Common {

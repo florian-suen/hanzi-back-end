@@ -13,7 +13,6 @@ import {sendEmail} from '../utility/sendEmail';
 import {v4} from 'uuid';
 import {NodeError} from '../types/node-error';
 import { Flashcards } from '../entities/Flashcards';
-import { Characters } from '../entities/Characters';
 import { FlashcardWords } from '../entities/FlashCardWords';
 import { FlashcardSentences } from '../entities/FlashCardSentences';
 
@@ -103,9 +102,6 @@ async flashcards(@Root() users:Users){
 
   @Query(returns => Users,{nullable:true})
   async isLogged(@Ctx(){req}:Context) {
-
-    console.log(await Users.createQueryBuilder().relation(Users,'flashcards').of(Users.findOne(req.session.userId)).loadMany());
-
     return req.session.userId ? Users.findOne(req.session.userId) : null;
    
   }

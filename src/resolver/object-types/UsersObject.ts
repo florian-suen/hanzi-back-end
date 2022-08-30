@@ -19,10 +19,10 @@ import {Field,ObjectType,InterfaceType, createUnionType} from 'type-graphql';
   }
  
   abstract class Constraint {
-  length?:string;
+  isLength?:string;
   isEmail?:string; 
   isNotEmpty?:string; 
-  maxLength?:string;
+  isMaxLength?:string;
 }
 
 @ObjectType()
@@ -35,7 +35,7 @@ class UserConstraint implements Constraint {
 @ObjectType()
 abstract class PasswordConstraint implements Constraint {
   @Field({nullable:true})
-  length?:string;
+  isLength?:string;
   @Field({nullable:true})
   isNotEmpty?:string;
 }

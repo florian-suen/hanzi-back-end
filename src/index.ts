@@ -53,17 +53,17 @@ const appCors = (app:express.Application )=>IO.of(app.use(cors({
 
 let RedisStore = connectRedis(session);
 //{host: 'redis'}
-let redis = new Redis();
+let redis = new Redis({host: 'redis'});
 
 const appUseRedis = (app:express.Application )=>IO.of(app.use(session({
   name:'ceid',
-  store: new RedisStore({ client: redis,disableTouch:true }),
+  store: new RedisStore({ client: redis, disableTouch:true }),
   cookie:{maxAge:1000*60*60*24*365,
   httpOnly:true,
   sameSite:'lax',
-  secure: false,
+  secure: !process.env.__PROD__,
 },
-  secret:process.env.SESSION_SECRET!,
+  secret: process.env.SESSION_SECRET!,
   resave: false,
   saveUninitialized:false
 })));

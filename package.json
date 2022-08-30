@@ -4,6 +4,7 @@
   "description": "The backend of the application",
   "main": "index.js",
   "scripts": {
+    "dev": "docker-compose build web & docker-compose up",
     "start": "nodemon",
     "build": "tsc -p .",
     "start-prod": "node ./lib/index.js"
@@ -24,13 +25,12 @@
     "@types/nodemailer": "^6.4.0",
     "@types/uuid": "^8.3.0",
     "nodemon": "^2.0.6",
-    "ts-node": "^9.0.0",
     "typescript": "^4.0.5"
   },
   "dependencies": {
     "apollo-server-express": "^2.19.0",
     "argon2": "^0.27.1",
-    "class-validator": "^0.12.2",
+    "class-validator": "^0.13.2",
     "connect-redis": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
@@ -42,6 +42,7 @@
     "nodemailer": "^6.4.18",
     "pg": "^8.5.1",
     "reflect-metadata": "^0.1.13",
+    "ts-node": "^10.9.1",
     "type-graphql": "^1.1.1",
     "typeorm": "^0.2.29",
     "uuid": "^8.3.2"

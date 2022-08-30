@@ -16,21 +16,21 @@ import { FlashcardSentences } from "./FlashCardSentences";
 @Entity()
 export class Sentences extends BaseEntity implements CharCollection {
 
-  @PrimaryGeneratedColumn()
-  id!:number;
+@PrimaryGeneratedColumn()
+id!:number;
   
-  @Column(type => Common)
-  char_detail!:Common;
+@Column(type => Common)
+char_detail!:Common;
   
-  @Field()
-  @Column()
-  chengyu?: Boolean
+@Field()
+@Column()
+chengyu?: Boolean
 
-  @ManyToMany(()=>Characters, characters=> characters.sentences)
-  characters!:Characters[]
+@ManyToMany(()=>Characters, characters=> characters.sentences)
+characters!:Characters[]
 
-  @ManyToMany(type => Words, words => words.sentences)
-  words!:Words;
+@ManyToMany(type => Words, words => words.sentences)
+words!:Words;
 
 @OneToMany(()=>FlashcardSentences, flashcards=>flashcards.sentences)
 flashcards!: FlashcardSentences[];

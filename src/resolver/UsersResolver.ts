@@ -17,7 +17,7 @@ import { FlashcardWords } from '../entities/FlashCardWords';
 import { FlashcardSentences } from '../entities/FlashCardSentences';
 
 
-const flashResponse = createUnionType({name:'flashResponse',types:()=>[Flashcards,FlashcardWords,FlashcardSentences] as const, resolveType:(val)=>{
+export const flashResponse = createUnionType({name:'flashResponse',types:()=>[Flashcards,FlashcardWords,FlashcardSentences] as const, resolveType:(val)=>{
   if('characters' in val)
   { return Flashcards }
   if('words' in val)
@@ -39,12 +39,11 @@ return undefined;
 
 @Resolver(of=>Users)
 export class UserResolver {
-@FieldResolver(()=>[flashResponse])
-async flashcards(@Root() users:Users){
+@FieldResolver(()=>[flashResponse],{nullable:false})
+async flashcard(@Root() users:Users){
  const charResponse = await Flashcards.createQueryBuilder('flashcard').leftJoinAndSelect("flashcard.characters", "characters").where("flashcard.usersId = :id",{id:users.id}).getMany();
  const wordResponse = await FlashcardWords.createQueryBuilder('flashcard').leftJoinAndSelect("flashcard.words", "words").where("flashcard.usersId = :id",{id:users.id}).getMany();
  const sentenceResponse = await FlashcardSentences.createQueryBuilder('flashcard').leftJoinAndSelect("flashcard.sentences", "sentence").where("flashcard.usersId = :id",{id:users.id}).getMany();
- 
  return [...charResponse,...wordResponse,...sentenceResponse];
 
 }
@@ -148,6 +147,7 @@ async flashcards(@Root() users:Users){
   @Mutation(returns => regResponse)
   async register(@Arg('regInputs')regInputs:RegInputs,@Ctx(){req}:Context):Promise<typeof regResponse> {
   const validationResults = await validator(regInputs);
+  console.log(validationResults.responses[0]);
   if(validationResults.responses[0]) { 
   return validationResults;
   }

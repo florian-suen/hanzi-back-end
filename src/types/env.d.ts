@@ -4,5 +4,6 @@ declare namespace NodeJS {
     PORT: string;
     SESSION_SECRET: string;
     DBURL:string;
+    __PROD__:boolean;
   }
 }

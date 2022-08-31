@@ -8,7 +8,7 @@ interface Validator extends ValidationErrors {}
 export function validator(inputs:object):Promise<Validator>{
 const validationError:T.Task<ValidationError[]> = () => validate(inputs); 
 const validationMapResponse = (val:ValidationError[])=>val && val.map((v)=>({property:v.property,constraints:v.constraints!})) 
-const validationResults = pipe(validationError,T.map(validationMapResponse),T.map((val)=>({message:'Validation error', responses:val})))()
+const validationResults = pipe(validationError,T.map(validationMapResponse),T.map((val)=>({message:'There was a problem with your details. Please re-check the marked fields', responses:val})))()
 return validationResults;
 }
 

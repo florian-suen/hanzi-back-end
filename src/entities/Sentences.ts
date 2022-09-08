@@ -23,7 +23,7 @@ id!:number;
 char_detail!:Common;
   
 @Field()
-@Column()
+@Column({default:false})
 chengyu?: Boolean
 
 @ManyToMany(()=>Characters, characters=> characters.sentences)

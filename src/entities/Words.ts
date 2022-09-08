@@ -1,4 +1,4 @@
-import { ObjectType } from "type-graphql";
+import { ObjectType,Field } from "type-graphql";
 import {Common, CharCollection} from './Common';
 import {
     Entity,
@@ -26,6 +26,10 @@ characters!:Characters;
 
 @Column({nullable:true,default:true})
 word?:boolean;
+
+@Field({nullable:true})
+@Column({nullable:true})
+variant?: string;
 
 @JoinTable({name:'word_sentence'})
 @ManyToMany(type => Sentences, sentences=>sentences.words)

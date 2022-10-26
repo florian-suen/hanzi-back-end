@@ -48,11 +48,20 @@ class PaginatedCharResponse {
   hasMoreSentence!: boolean;
 }
 
+type limitCursor = {
+  maxLimitPlusOne: number;
+  cursor: {
+    cursorChar: number | null;
+    cursorWord: number | null;
+    cursorSent: number | null;
+  };
+};
+
 const queryDB = (
   query: string[],
   options: string[],
   cnIndex: boolean[],
-  limitCursor: any[]
+  limitCursor: limitCursor
 ) => {
   const optLength = options.length;
   const optionList = {
@@ -78,6 +87,21 @@ const queryDB = (
       : searchPY[0];
 
   for (let i = 0; optLength > i; i += 1) {
+    let cursor: number | null;
+    switch (optionList[options[i]]) {
+      case Characters:
+        cursor = limitCursor.cursor.cursorChar;
+        break;
+      case Words:
+        cursor = limitCursor.cursor.cursorWord;
+        break;
+      case Sentences:
+        cursor = limitCursor.cursor.cursorSent;
+        break;
+      default:
+        break;
+    }
+
     if (searchCN.length > 0 && searchPY.length > 0)
       taskArray.push(
         TE.tryCatch<string, typeof charResponse[]>(
@@ -91,10 +115,13 @@ const queryDB = (
                 `unaccent(REGEXP_REPLACE("charDetailPinyin",'\s','','g')) Like unaccent(:char)`,
                 { char: `%${combinePY}%` }
               );
-            if (limitCursor[1])
-              queryDB.andWhere(`id > :cursor`, { cursor: limitCursor[1] });
 
-            return queryDB.orderBy(`id`).take(limitCursor[0]).getMany();
+            if (cursor) queryDB.andWhere(`id > :cursor`, { cursor: cursor });
+
+            return queryDB
+              .orderBy(`id`)
+              .take(limitCursor.maxLimitPlusOne)
+              .getMany();
           },
           (reason) => "findChar Resolver search error"
         )
@@ -109,10 +136,12 @@ const queryDB = (
                 char: `%${combineCN}%`,
               });
 
-            if (limitCursor[1])
-              queryDB.andWhere(`id > :cursor`, { cursor: limitCursor[1] });
+            if (cursor) queryDB.andWhere(`id > :cursor`, { cursor: cursor });
 
-            return queryDB.orderBy(`id`).take(limitCursor[0]).getMany();
+            return queryDB
+              .orderBy(`id`)
+              .take(limitCursor.maxLimitPlusOne)
+              .getMany();
           },
           (reason) => "findChar Resolver search error"
         )
@@ -127,10 +156,12 @@ const queryDB = (
                 `unaccent(REGEXP_REPLACE("charDetailPinyin",'\s','','g')) Like unaccent(:char)`,
                 { char: `%${combinePY}%` }
               );
-            if (limitCursor[1])
-              queryDB.andWhere(`id > :cursor`, { cursor: limitCursor[1] });
+            if (cursor) queryDB.andWhere(`id > :cursor`, { cursor: cursor });
 
-            return queryDB.orderBy(`id`).take(limitCursor[0]).getMany();
+            return queryDB
+              .orderBy(`id`)
+              .take(limitCursor.maxLimitPlusOne)
+              .getMany();
           },
           (reason) => "findChar Resolver search error"
         )
@@ -144,7 +175,7 @@ const queryDB = (
     : taskArray[0];
 };
 
-function searchDB(chars: string[], options: Options, limitCursor: any[]) {
+function searchDB(chars: string[], options: Options, limitCursor: limitCursor) {
   const searchCharacters = chars;
   const REGEX_CHINESE =
     /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/;
@@ -228,17 +259,23 @@ export class CharacterResolver {
     @Arg("char", (type) => [String]) char: string[],
     @Arg("options", (type) => Options) options: Options,
     @Arg("limit", () => Int) limit: number,
-    @Arg("cursor", () => Int, { nullable: true }) cursor: number | null
+    @Arg("cursorChar", () => Int, { nullable: true }) cursorChar: number | null,
+    @Arg("cursorWord", () => Int, { nullable: true }) cursorWord: number | null,
+    @Arg("cursorSent", () => Int, { nullable: true }) cursorSent: number | null
   ): Promise<PaginatedCharResponse> {
     const maxLimit = Math.min(10, limit);
     const maxLimitPlusOne = maxLimit + 1;
-    const limitCursor: any[] = [maxLimitPlusOne];
+    const limitCursor = {
+      maxLimitPlusOne,
+      cursor: { cursorChar, cursorWord, cursorSent },
+    };
+
     let hasMore = {
       hasMoreChar: false,
       hasMoreWord: false,
       hasMoreSentence: false,
     };
-    if (cursor) limitCursor.push(cursor);
+
     const trimCharArray = char
       .filter((v) => v != "")
       .map((v) => v.toLowerCase());
